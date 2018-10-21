@@ -50,9 +50,18 @@ int Temperatura_regulacio=10;
  */
 int Temperatura_actual;
 	/**
- * @brief Variable funciona de flag per donar alarma: el ventilador porta 5 min consecutius funcionant
+ * @brief Variable funciona de flag per demanar cada min dades a arduino
+ * @brief Variable funciona de flag per encendre o apagar ventilador cada min dades a arduino
  */
-int x;
+int x,y=0; 
+
+char missatge[255];
+
+int res=0,fd;
+
+char buf[255];
+
+int temps; 
 /*------------------------*/
                                                           
 struct termios oldtio,newtio;  
@@ -180,6 +189,29 @@ void TancarSerie(int fd)
 }
 /*-------------------------------------------------------------------------------*/
 
+//void encendre_ventilador(){
+	
+		//sprintf(missatge,"AS131Z");//confimació ok /*<---------CANVIAR PER SORTIDA*/
+		//enviar(missatge,res,fd);
+		//printf("mensaje enviado\n");
+		//memset(buf,'\0',256);
+		//rebre(buf, fd, temps);//comprobació del missatge rebut (només compara que acabi amb la Z)
+		//printf("mensaje recibido\n");
+		//printf("%s\n",buf);
+		////y=0;
+//}
+
+//void apagar_ventilador(){
+	
+		//sprintf(missatge,"AS130Z");//confimació ok /*<---------CANVIAR PER SORTIDA*/
+		//enviar(missatge,res,fd);
+		//memset(buf,'\0',256);
+		//rebre(buf, fd, temps);//comprobació del missatge rebut (només compara que acabi amb la Z)
+		//printf("%s\n",buf);
+		////y=0;
+		
+//}
+
 void regulacio_Temp (int T,int Treg){
 	
 	
@@ -191,9 +223,10 @@ void regulacio_Temp (int T,int Treg){
 	
 	if (T>Treg && vent==0) { // comprovem si s'ha d'encendre el ventilador		
 							//Si el ventilador no estava ences posem variable ventilador a 1 
-		printf("Encendre ventilador\n");/*<---------ENVIAR ORDRE ARDUINO ENCENDRE VENT*/
-		
+		printf("Encendre ventilador\n");/*<---------ENVIAR ORDRE ARDUINO ENCENDRE VENT*/	
+		//encendre_ventilador();
 		vent=1;
+		y=2;
 		alarma=0; //resetejem contador minuts ventilador
 		}
 	else if(T>Treg && vent==1){
@@ -205,9 +238,11 @@ void regulacio_Temp (int T,int Treg){
 		}
 	else if (T<Treg && (vent==2||vent==1)){
 		printf("Apagar ventilador\n");/*<---------ENVIAR ORDRE ARDUINO APAGAR VENT*/
+		//apagar_ventilador();
+		y=1;
 		vent=0;
 	}
-	else {vent==0;}
+	else {vent=0;}
 
 	printf("Taula temperatura\n"); /*<---------ESCRIURE TAULA TEMPERATURES SQL*/
 	printf("Temp: %d\n",T);
@@ -230,13 +265,11 @@ void regulacio_Temp (int T,int Treg){
 int main(int argc, char ** argv)
 {
 	 //Declaració variables funció main                                                                   
-	int i=0, fd, res=0,m=1, lectures=0, pos=0;                                                     
-	int temps; 
+	int i=0, fd,m=1, lectures=0, pos=0;                                                     
 	float array[3600];
 	float graus=0, maxim=0, minim=99;
 	int mostres = 0;
 	int comp=0;
-	char buf[255];
 	char missatge[255];
 	int comparacio=0;
 	memset(buf,'\0',256);
@@ -290,15 +323,40 @@ int main(int argc, char ** argv)
 			sprintf(missatge,"ACZ");//confimació ok
 			enviar(missatge,res,fd);
 			memset(buf,'\0',256);
-			rebre(buf, fd, temps);
-			printf("%s\n",buf);//comprobació del missatge rebut
-		
+			rebre(buf, fd, temps);//comprobació del missatge rebut (només compara que acabi amb la Z)
+			printf("%s\n",buf);
+			
 			Temperatura_actual=(buf[3]-48)*100+(buf[4]-48)*10+(buf[5]-48)+(buf[6]-48)*0.1;
 			Temperatura_actual= (5* Temperatura_actual *100)/1024 ;
 			
 			printf	("TEMPERATURA CALCULADA = %d \n",Temperatura_actual);
 			
 			regulacio_Temp (Temperatura_actual,Temperatura_regulacio);/*<---------ES COMPARA T AMB TREG I POSA BASE DADES*/
+			
+			if (y==1){
+				sprintf(missatge,"AS130Z");
+				printf("%s\n",missatge);//es verfifica pel terminal el missatge enviat
+				enviar(missatge, res, fd);
+				printf("mensaje enviado\n");
+				memset(buf,'\0',256);	
+				rebre(buf, fd, temps);
+				printf("mensaje recibido\n");
+				printf("%s\n",buf);
+				y=0;
+				}
+			else if (y==2){
+				sprintf(missatge,"AS131Z");
+				printf("%s\n",missatge);//es verfifica pel terminal el missatge enviat
+				enviar(missatge, res, fd);
+				printf("mensaje enviado\n");
+				memset(buf,'\0',256);	
+				rebre(buf, fd, temps);
+				printf("mensaje recibido\n");
+				printf("%s\n",buf);
+				y=0;
+			}
+			else{}
+			
 			x=0;
 		}else{}
 		}
