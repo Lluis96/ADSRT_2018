@@ -26,13 +26,24 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h> 
+#include <sqlite3.h> 
 
 #define BAUDRATE B115200  //IMPORTANTE QUE SEA 115200                                                
 //#define MODEMDEVICE "/dev/ttyS0"        //Conexió IGEP - Arduino
-#define MODEMDEVICE "/dev/ttyACM0"         //Conexió directa PC(Linux) - Arduino                                   
+#define MODEMDEVICE "/dev/ttyUSB0"         //Conexió directa PC(Linux) - Arduino                                   
 #define _POSIX_SOURCE 1 /* POSIX compliant source */                       
  
 /* VARIABLES GLOBALS*/
+
+//variables sql
+	sqlite3 *db;
+	char *zErrMsg = 0;
+	int rc;
+	char *sql;
+	char *query = NULL;
+	char sentencia[100];
+	sqlite3_stmt *stmt; 
+	
 	/**
 	@brief Variable conta els minuts que esta ences el ventilador
  */
@@ -65,6 +76,16 @@ int temps;
 /*------------------------*/
                                                           
 struct termios oldtio,newtio;  
+
+
+static int callbacksql(void *NotUsed, int argc, char **argv, char **azColName) {
+   int i;
+   for(i = 0; i<argc; i++) {
+      printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+   }
+   printf("\n");
+   return 0;
+}
 
 void callback(union sigval si)
 {
@@ -247,12 +268,50 @@ void regulacio_Temp (int T,int Treg){
 	printf("Taula temperatura\n"); /*<---------ESCRIURE TAULA TEMPERATURES SQL*/
 	printf("Temp: %d\n",T);
 	printf("Estat vent: %d\n",vent);
+/*---------------------------------------------------------------------------------------------*/
+	sprintf(sentencia, "insert into TEMPERATURA (TEMPERATURA, VENT) values (%d, %d); ", T, vent);         /* 1 */
+	printf("ha insertado datos \t %s",sentencia);
+	
+	rc = sqlite3_exec(db, sentencia, callbacksql, 0, &zErrMsg);
+   
+	   if( rc != SQLITE_OK ){
+	   fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		  sqlite3_free(zErrMsg);
+	   } else {
+		  fprintf(stdout, "Datos subidos tabla TEMPERATURA correctamente\n");
+	   }
+	
+	//sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL);                              /* 2 */
+
+	//rc = sqlite3_step(stmt);
+	
+	//if (rc != SQLITE_DONE) {
+    //printf("ERROR inserting data: %s\n", sqlite3_zErrMsg(db));
+ 
+	//}
+
+	//sqlite3_finalize(stmt);
+	//free(query);
+	
+	
 /*--------------------------------------------------------------------------------------------*/
 
 /*CONTROL VARIABLE TAULA ALARMES */
 
 	if (alarma == 5){
 		printf("!! Salta alarma -> Taula alarmes\n"); /*<---------ESCRIURE TAULA ALARMES SQL*/
+		
+		sprintf(sentencia, "insert into ALARMES (TEMPS_ON) values (%d); ", alarma );         /* 1 */
+		printf("ha insertado datos \t %s",sentencia);
+	
+		rc = sqlite3_exec(db, sentencia, callbacksql, 0, &zErrMsg);
+   
+	   if( rc != SQLITE_OK ){
+	   fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		  sqlite3_free(zErrMsg);
+	   } else {
+		  fprintf(stdout, "Datos subidos tabla ALARMA correctamente\n");
+	   }
 		alarma=0;
 	}
 
@@ -274,6 +333,52 @@ int main(int argc, char ** argv)
 	int comparacio=0;
 	memset(buf,'\0',256);
 	fd = ConfigurarSerie();
+	
+	
+	/* Open database */
+   rc = sqlite3_open("database.db", &db);
+   
+   if( rc ) {
+      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+      return(0);
+   } else {
+      fprintf(stdout, "Opened database successfully\n");
+   }
+   
+   /* Create TAULA TEMPERATURA SQL statement */
+   sql = "CREATE TABLE TEMPERATURA("  \
+         "DATA 			 DATATIME   ," \
+         "TEMPERATURA    INT    NOT NULL," \
+         "VENT	         INT 	NOT NULL );";
+
+   /* Execute SQL statement */
+   rc = sqlite3_exec(db, sql, callbacksql, 0, &zErrMsg);
+   
+   if( rc != SQLITE_OK ){
+   fprintf(stderr, "SQL error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+   } else {
+      fprintf(stdout, "Table TEMPERATURA created successfully\n");
+   }
+	
+	/* Create TAULA ALARMES SQL statement */
+   sql = "CREATE TABLE ALARMES("  \
+         "DATA 			DATATIME   ," \
+         "TEMPS_ON	    INT 	NOT NULL );";
+
+   /* Execute SQL statement */
+   rc = sqlite3_exec(db, sql, callbacksql, 0, &zErrMsg);
+   
+   if( rc != SQLITE_OK ){
+   fprintf(stderr, "SQL error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+   } else {
+      fprintf(stdout, "Table ALARMES created successfully\n");
+   }
+	
+	
+	
+	
 	
 	// Enviar el missatge 1, possada en marxa
 	printf("Inserta el temps de mostreig\n");
@@ -365,6 +470,6 @@ int main(int argc, char ** argv)
 		 
 	//criedem a la funció per tancar la comunicació sèrie                                                         
 	TancarSerie(fd);
-		
+	sqlite3_close(db);	
     return 0;
 }
