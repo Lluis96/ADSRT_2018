@@ -41,6 +41,9 @@
 	int rc;
 	char *sql;
 	char *query = NULL;
+	/**
+	@brief Variable on es concatena el missatge a posar a la base dades.
+ */
 	char sentencia[100];
 	sqlite3_stmt *stmt; 
 	
@@ -77,7 +80,9 @@ int temps;
                                                           
 struct termios oldtio,newtio;  
 
-
+/**
+ * @brief Funció callback que es crida quan sexecuta comando exec del sql                 
+ */ 
 static int callbacksql(void *NotUsed, int argc, char **argv, char **azColName) {
    int i;
    for(i = 0; i<argc; i++) {
@@ -87,6 +92,9 @@ static int callbacksql(void *NotUsed, int argc, char **argv, char **azColName) {
    return 0;
 }
 
+/**
+ * @brief Funció callback que crida el timer                
+ */ 
 void callback(union sigval si)
 {
     char * msg = (char *) si.sival_ptr;
@@ -110,7 +118,9 @@ typedef void (timer_callback) (union sigval);
  * data: informació que es passarà a la funció func
  * 
  * */
- 
+/**
+ * @brief Funció per configurar el timer                
+ */ 
 int set_timer(timer_t * timer_id, float delay, float interval, timer_callback * func, void * data) 
 {
     int status =0;
@@ -133,9 +143,11 @@ int set_timer(timer_t * timer_id, float delay, float interval, timer_callback * 
     return 0;
 }
 
-
-
 /*----------------------------COMUNICACIONES CON ARDUINO-------------------------------*/
+/**
+ * @brief Funció per configurar la comunicacio serie               
+ */
+
 int	ConfigurarSerie(void)
 {
 	int fd;                                                           
@@ -166,7 +178,13 @@ int	ConfigurarSerie(void)
 		
 	return fd;
 } 
-//Funció per envir missatges a l'arduino              
+
+/**
+ * @brief Funció per envir missatges a l'arduino              
+ * @param 
+ * @param 
+ * @param 
+ */
 void enviar(char *missatge, int res, int fd)
 {                                                       
 	
@@ -176,7 +194,13 @@ void enviar(char *missatge, int res, int fd)
 	
 }
 
- //Funció per poder rebere missatges de l'arduino 
+
+/**
+ * @brief Funció per poder rebere missatges de l'arduino
+ * @param 
+ * @param 
+ * @param 
+ */ 
 void rebre (char *buf, int fd, int temps)
 {
 	int res=0;
@@ -209,30 +233,11 @@ void TancarSerie(int fd)
 	close(fd);
 }
 /*-------------------------------------------------------------------------------*/
-
-//void encendre_ventilador(){
-	
-		//sprintf(missatge,"AS131Z");//confimació ok /*<---------CANVIAR PER SORTIDA*/
-		//enviar(missatge,res,fd);
-		//printf("mensaje enviado\n");
-		//memset(buf,'\0',256);
-		//rebre(buf, fd, temps);//comprobació del missatge rebut (només compara que acabi amb la Z)
-		//printf("mensaje recibido\n");
-		//printf("%s\n",buf);
-		////y=0;
-//}
-
-//void apagar_ventilador(){
-	
-		//sprintf(missatge,"AS130Z");//confimació ok /*<---------CANVIAR PER SORTIDA*/
-		//enviar(missatge,res,fd);
-		//memset(buf,'\0',256);
-		//rebre(buf, fd, temps);//comprobació del missatge rebut (només compara que acabi amb la Z)
-		//printf("%s\n",buf);
-		////y=0;
-		
-//}
-
+/**
+ * @brief Funcio per comparar la temperatura amb la temperatura de regulacio i pujar dades a la base de dades
+ * @param Temperatura actual, donada per el arduino
+ * @param Temperatura de regulacio a 10 graus
+ */
 void regulacio_Temp (int T,int Treg){
 	
 	
@@ -244,7 +249,7 @@ void regulacio_Temp (int T,int Treg){
 	
 	if (T>Treg && vent==0) { // comprovem si s'ha d'encendre el ventilador		
 							//Si el ventilador no estava ences posem variable ventilador a 1 
-		printf("Encendre ventilador\n");/*<---------ENVIAR ORDRE ARDUINO ENCENDRE VENT*/	
+		//printf("Encendre ventilador\n");/*<---------ENVIAR ORDRE ARDUINO ENCENDRE VENT*/	
 		//encendre_ventilador();
 		vent=1;
 		y=2;
@@ -265,12 +270,12 @@ void regulacio_Temp (int T,int Treg){
 	}
 	else {vent=0;}
 
-	printf("Taula temperatura\n"); /*<---------ESCRIURE TAULA TEMPERATURES SQL*/
+	//printf("Taula temperatura\n"); /*<---------ESCRIURE TAULA TEMPERATURES SQL*/
 	printf("Temp: %d\n",T);
 	printf("Estat vent: %d\n",vent);
 /*---------------------------------------------------------------------------------------------*/
-	sprintf(sentencia, "insert into TEMPERATURA (TEMPERATURA, VENT) values (%d, %d); ", T, vent);         /* 1 */
-	printf("ha insertado datos \t %s",sentencia);
+	//sprintf(sentencia, "insert into TEMPERATURA (TEMPERATURA, VENT) values (%d, %d); ", T, vent);         /* 1 */
+	//printf("ha insertado datos \t %s",sentencia);
 	
 	rc = sqlite3_exec(db, sentencia, callbacksql, 0, &zErrMsg);
    
@@ -280,18 +285,6 @@ void regulacio_Temp (int T,int Treg){
 	   } else {
 		  fprintf(stdout, "Datos subidos tabla TEMPERATURA correctamente\n");
 	   }
-	
-	//sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL);                              /* 2 */
-
-	//rc = sqlite3_step(stmt);
-	
-	//if (rc != SQLITE_DONE) {
-    //printf("ERROR inserting data: %s\n", sqlite3_zErrMsg(db));
- 
-	//}
-
-	//sqlite3_finalize(stmt);
-	//free(query);
 	
 	
 /*--------------------------------------------------------------------------------------------*/
@@ -326,11 +319,8 @@ int main(int argc, char ** argv)
 	 //Declaració variables funció main                                                                   
 	int i=0, fd,m=1, lectures=0, pos=0;                                                     
 	float array[3600];
-	float graus=0, maxim=0, minim=99;
 	int mostres = 0;
-	int comp=0;
 	char missatge[255];
-	int comparacio=0;
 	memset(buf,'\0',256);
 	fd = ConfigurarSerie();
 	
@@ -377,16 +367,13 @@ int main(int argc, char ** argv)
    }
 	
 	
-	
-	
-	
 	// Enviar el missatge 1, possada en marxa
-	printf("Inserta el temps de mostreig\n");
-	scanf("%i",&temps);
-	printf("Inserta el número de mostres per fer la mitjana\n");
-	scanf("%i",&mostres);
-	sprintf(missatge,"AM1%02i%iZ",temps, mostres);
-
+	//printf("Inserta el temps de mostreig\n");
+	//scanf("%i",&temps);
+	//printf("Inserta el número de mostres per fer la mitjana\n");
+	//scanf("%i",&mostres);
+	//sprintf(missatge,"AM1%02i%iZ",temps, mostres);
+	sprintf(missatge,"AM1104Z",temps, mostres);
 	printf("%s\n",missatge);//es verfifica pel terminal el missatge enviat
 	enviar(missatge, res, fd);
 	
@@ -408,39 +395,34 @@ int main(int argc, char ** argv)
     //es comproba que el missatge rebut ha estat el correcte 'AMOZ'	
 	if (strncmp(buf,"AM0Z",4)==0)
 	{
-		
+		// es configurar timer per demanar la temperatura al arduino cada 60s
 		timer_t rutina;
-	 
-		set_timer(&rutina, 1, 10, callback,(void *) "rutina");
+		set_timer(&rutina, 1, 60, callback,(void *) "rutina");
 		
-		comparacio=0+temps;
-		graus=0;	
-		comp=0;
-		
-		//getchar();
+		//bucle per demanar temperatura i posar en base de dades
 		while(1){
 			memset(buf,'\0',256);//es neteja el buf per poder llegir els valors correctament
 			
 		if (x==1){
 			
-			//printf("Escriu temperatura actual: "); //PEDIR TEMPERATURA AL ARDUINO
-			//scanf("%d/n",&Temperatura_actual);
+			//PEDIR TEMPERATURA AL ARDUINO
 			sprintf(missatge,"ACZ");//confimació ok
 			enviar(missatge,res,fd);
 			memset(buf,'\0',256);
 			rebre(buf, fd, temps);//comprobació del missatge rebut (només compara que acabi amb la Z)
 			printf("%s\n",buf);
 			
+			//Calculo de la temperatura
 			Temperatura_actual=(buf[3]-48)*100+(buf[4]-48)*10+(buf[5]-48)+(buf[6]-48)*0.1;
 			Temperatura_actual= (5* Temperatura_actual *100)/1024 ;
 			
-			printf	("TEMPERATURA CALCULADA = %d \n",Temperatura_actual);
+			//printf	("TEMPERATURA CALCULADA = %d \n",Temperatura_actual);
 			
 			regulacio_Temp (Temperatura_actual,Temperatura_regulacio);/*<---------ES COMPARA T AMB TREG I POSA BASE DADES*/
 			
-			if (y==1){
-				sprintf(missatge,"AS130Z");
-				printf("%s\n",missatge);//es verfifica pel terminal el missatge enviat
+			if (y==1){ //En cas que la temperatura sobrepassa la temperatura de regulacio--> Encen ventilador
+				sprintf(missatge,"AS130Z");//s'executen les probes amb el led13
+				printf("Apaguem ventilador: %s\n",missatge);//es verfifica pel terminal el missatge enviat
 				enviar(missatge, res, fd);
 				printf("mensaje enviado\n");
 				memset(buf,'\0',256);	
@@ -449,9 +431,9 @@ int main(int argc, char ** argv)
 				printf("%s\n",buf);
 				y=0;
 				}
-			else if (y==2){
-				sprintf(missatge,"AS131Z");
-				printf("%s\n",missatge);//es verfifica pel terminal el missatge enviat
+			else if (y==2){// Si el ventilador estava engegat i la temperatura < temperatura regulacio --> apaga ventilador
+				sprintf(missatge,"AS131Z"); // s'executen les probes amb el led13
+				printf("Encenem ventilador: %s\n",missatge);//es verfifica pel terminal el missatge enviat
 				enviar(missatge, res, fd);
 				printf("mensaje enviado\n");
 				memset(buf,'\0',256);	

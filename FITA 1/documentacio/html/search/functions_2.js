@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['regulacio_5ftemp',['regulacio_Temp',['../main_8c.html#ad2aa5e2c0179f11632f097aee57d7f4c',1,'main.c']]]
+  ['main',['main',['../main_8c.html#a3c04138a5bfe5d72780bb7e82a18e627',1,'main.c']]]
 ];
