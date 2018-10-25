@@ -13,7 +13,7 @@
  * Crea dos timers que es disparen cada segon de forma alternada
  * Cada cop que es disparen imprimeixen per pantalla un missatge
  * 
- * Per compilar: gcc main.c -lrt -lpthread -o main
+ * Per compilar: gcc main.c -lsqlite3 -lrt -lpthread -o main
  */
  
 #include <fcntl.h>                                                        
@@ -30,7 +30,7 @@
 
 #define BAUDRATE B115200  //IMPORTANTE QUE SEA 115200                                                
 //#define MODEMDEVICE "/dev/ttyS0"        //Conexió IGEP - Arduino
-#define MODEMDEVICE "/dev/ttyUSB0"         //Conexió directa PC(Linux) - Arduino                                   
+#define MODEMDEVICE "/dev/ttyACM0"         //Conexió directa PC(Linux) - Arduino                                   
 #define _POSIX_SOURCE 1 /* POSIX compliant source */                       
  
 /* VARIABLES GLOBALS*/
@@ -67,7 +67,7 @@ int Temperatura_actual;
  * @brief Variable funciona de flag per demanar cada min dades a arduino
  * @brief Variable funciona de flag per encendre o apagar ventilador cada min dades a arduino
  */
-int x,y=0; 
+int x; 
 
 char missatge[255];
 
@@ -238,9 +238,32 @@ void TancarSerie(int fd)
  * @param Temperatura actual, donada per el arduino
  * @param Temperatura de regulacio a 10 graus
  */
-void regulacio_Temp (int T,int Treg){
-	
-	
+ int regulacio_Temp (int T,int Treg){
+	char fecha[80];
+	static int tmpsalarma=0;
+        //Definim una variable de tipus time_t
+	time_t temps;
+
+        //Capturem el temps amb la funcio time(time_t *t);
+	temps = time(NULL);
+        //El valor de retorn es a una variable de tipus timei_t, on posaràl temps en segons des de 1970-01-01 00:00:00 +0000 (UTC)
+
+	// struct tm {
+	//     int tm_sec;         /* seconds */
+	//     int tm_min;         /* minutes */
+	//     int tm_hour;        /* hours */
+	//     int tm_mday;        /* day of the month */
+	//     int tm_mon;         /* month */
+	//     int tm_year;        /* year */
+	//     int tm_wday;        /* day of the week */
+	//     int tm_yday;        /* day in the year */
+	//     int tm_isdst;       /* daylight saving time */
+	//};
+
+	// Defineix punter a una estructura tm
+        struct tm * p_data;
+        
+	int y;
 	/*CONTROL VARIABLE TAULA TEMPERATURA + ESTAT VENTILADOR*/
 	//T=temp. actual ha d'estar ja processada 
 	//T=temperatura de regulacio
@@ -264,6 +287,8 @@ void regulacio_Temp (int T,int Treg){
 		}
 	else if (T<Treg && (vent==2||vent==1)){
 		printf("Apagar ventilador\n");/*<---------ENVIAR ORDRE ARDUINO APAGAR VENT*/
+		tmpsalarma=0;
+		printf("temps alarma%d:\n",tmpsalarma);
 		//apagar_ventilador();
 		y=1;
 		vent=0;
@@ -274,8 +299,15 @@ void regulacio_Temp (int T,int Treg){
 	printf("Temp: %d\n",T);
 	printf("Estat vent: %d\n",vent);
 /*---------------------------------------------------------------------------------------------*/
-	//sprintf(sentencia, "insert into TEMPERATURA (TEMPERATURA, VENT) values (%d, %d); ", T, vent);         /* 1 */
-	//printf("ha insertado datos \t %s",sentencia);
+	//Funcion localtime() per traduir segons UTC a la hora:minuts:segons de la hora local
+	//struct tm *localtime(const time_t *timep);
+    p_data = localtime( &temps );
+	
+	strftime(fecha, 80,"%d/%m/%Y %H:%M:%S",p_data);
+	
+	printf("p_data: '%s'\n ", fecha);
+	
+	sprintf(sentencia, "insert into TEMPERATURA (DATA,TEMPERATURA, VENT) values ('%s',%d,%d); ",fecha,T, vent);         /* 1 */
 	
 	rc = sqlite3_exec(db, sentencia, callbacksql, 0, &zErrMsg);
    
@@ -291,11 +323,22 @@ void regulacio_Temp (int T,int Treg){
 
 /*CONTROL VARIABLE TAULA ALARMES */
 
-	if (alarma == 5){
+	if (alarma >= 5){
+		
+		tmpsalarma=tmpsalarma+5;
+		printf("temps alarma%d:\n",tmpsalarma);
+		
 		printf("!! Salta alarma -> Taula alarmes\n"); /*<---------ESCRIURE TAULA ALARMES SQL*/
 		
-		sprintf(sentencia, "insert into ALARMES (TEMPS_ON) values (%d); ", alarma );         /* 1 */
-		printf("ha insertado datos \t %s",sentencia);
+		//Funcion localtime() per traduir segons UTC a la hora:minuts:segons de la hora local
+		//struct tm *localtime(const time_t *timep);
+		p_data = localtime( &temps );
+	
+		strftime(fecha, 80,"%d/%m/%Y %H:%M:%S",p_data);
+	
+		printf("p_data ALARMA: '%s'\n ", fecha);
+		
+		sprintf(sentencia, "insert into ALARMES (DATA,TEMPS_ON) values ('%s',%d); ",fecha, tmpsalarma );         /* 1 */
 	
 		rc = sqlite3_exec(db, sentencia, callbacksql, 0, &zErrMsg);
    
@@ -309,7 +352,7 @@ void regulacio_Temp (int T,int Treg){
 	}
 
 /*--------------------------------------------------------------------------------------------*/
-	
+	return y;
 }
 
 
@@ -323,7 +366,7 @@ int main(int argc, char ** argv)
 	char missatge[255];
 	memset(buf,'\0',256);
 	fd = ConfigurarSerie();
-	
+	int y=0;
 	
 	/* Open database */
    rc = sqlite3_open("database.db", &db);
@@ -337,7 +380,7 @@ int main(int argc, char ** argv)
    
    /* Create TAULA TEMPERATURA SQL statement */
    sql = "CREATE TABLE TEMPERATURA("  \
-         "DATA 			 DATATIME   ," \
+         "DATA 			 DATATIME  NOT NULL," \
          "TEMPERATURA    INT    NOT NULL," \
          "VENT	         INT 	NOT NULL );";
 
@@ -367,12 +410,6 @@ int main(int argc, char ** argv)
    }
 	
 	
-	// Enviar el missatge 1, possada en marxa
-	//printf("Inserta el temps de mostreig\n");
-	//scanf("%i",&temps);
-	//printf("Inserta el número de mostres per fer la mitjana\n");
-	//scanf("%i",&mostres);
-	//sprintf(missatge,"AM1%02i%iZ",temps, mostres);
 	sprintf(missatge,"AM1104Z",temps, mostres);
 	printf("%s\n",missatge);//es verfifica pel terminal el missatge enviat
 	enviar(missatge, res, fd);
@@ -397,7 +434,7 @@ int main(int argc, char ** argv)
 	{
 		// es configurar timer per demanar la temperatura al arduino cada 60s
 		timer_t rutina;
-		set_timer(&rutina, 1, 60, callback,(void *) "rutina");
+		set_timer(&rutina, 1, 10, callback,(void *) "rutina");
 		
 		//bucle per demanar temperatura i posar en base de dades
 		while(1){
@@ -418,7 +455,7 @@ int main(int argc, char ** argv)
 			
 			//printf	("TEMPERATURA CALCULADA = %d \n",Temperatura_actual);
 			
-			regulacio_Temp (Temperatura_actual,Temperatura_regulacio);/*<---------ES COMPARA T AMB TREG I POSA BASE DADES*/
+			y = regulacio_Temp (Temperatura_actual,Temperatura_regulacio);/*<---------ES COMPARA T AMB TREG I POSA BASE DADES*/
 			
 			if (y==1){ //En cas que la temperatura sobrepassa la temperatura de regulacio--> Encen ventilador
 				sprintf(missatge,"AS130Z");//s'executen les probes amb el led13
