@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h> 
 #include <sqlite3.h> 
+#include <getopt.h>
 
 #define BAUDRATE B115200  //IMPORTANTE QUE SEA 115200                                                
 //#define MODEMDEVICE "/dev/ttyS0"        //Conexió IGEP - Arduino
@@ -359,6 +360,41 @@ void TancarSerie(int fd)
 
 int main(int argc, char ** argv)
 {
+	int c;
+	char *nom_database=NULL;
+	char basedatos[50]="database.db";
+	
+	
+	/** ADquisición de los parametros de lanzamiento del programa*/
+	/** Pendiente agregar opción para la adquisición de la temperatura objetivo a mantener*/
+	
+	while ((c = getopt(argc, argv, "d:t:h")) != -1) {
+		switch (c) {
+		case 'd':
+			//printf("%s\n",argv);
+			nom_database = optarg;
+			sprintf(basedatos,"%s.db",nom_database);	
+			printf("S'ha cambiat la base de dades\nNova base de dades:\t%s\n",basedatos);
+			
+			break;
+		case 't':
+			Temperatura_regulacio=atoi(optarg);
+			printf("S'ha canviat la temperatura de regulacio\nNova temperatura de regulacio:\t%d\n",Temperatura_regulacio);
+			break;
+		case 'h':
+			printf("\nUso: main [opciones] -n [nombre_archivo.db]...\n\n");
+			printf("-db [nom.db] Nom base de datos. Precisa 'nombre_base_datos.db'\n");
+			printf("-treg [temperatura regulacion]	Temperatura regulacion . Default = 10º.\n\n");
+			exit(1);
+		case '?':
+			printf("Opció desconeguda prem '-h' per veure l'ajuda.\n");
+			break;
+		default:
+			abort();
+		}
+	}
+	
+	
 	 //Declaració variables funció main                                                                   
 	int i=0, fd,m=1, lectures=0, pos=0;                                                     
 	float array[3600];
@@ -369,7 +405,7 @@ int main(int argc, char ** argv)
 	int y=0;
 	
 	/* Open database */
-   rc = sqlite3_open("database.db", &db);
+   rc = sqlite3_open(basedatos, &db);
    
    if( rc ) {
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
