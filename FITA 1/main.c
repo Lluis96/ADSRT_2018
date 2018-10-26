@@ -372,6 +372,7 @@ int main(int argc, char ** argv)
 		switch (c) {
 		case 'd':
 			//printf("%s\n",argv);
+			sqlite3_close(db);
 			nom_database = optarg;
 			sprintf(basedatos,"%s.db",nom_database);	
 			printf("S'ha cambiat la base de dades\nNova base de dades:\t%s\n",basedatos);
@@ -383,8 +384,8 @@ int main(int argc, char ** argv)
 			break;
 		case 'h':
 			printf("\nUso: main [opciones] -n [nombre_archivo.db]...\n\n");
-			printf("-db [nom.db] Nom base de datos. Precisa 'nombre_base_datos.db'\n");
-			printf("-treg [temperatura regulacion]	Temperatura regulacion . Default = 10º.\n\n");
+			printf("-d [nom] Poner solo el nombre sin (.db) Precisa 'nombre_base_datos.db'\n");
+			printf("-t [temperatura regulacion]	Temperatura regulacion . Default = 10º.\n\n");
 			exit(1);
 		case '?':
 			printf("Opció desconeguda prem '-h' per veure l'ajuda.\n");
@@ -415,7 +416,7 @@ int main(int argc, char ** argv)
    }
    
    /* Create TAULA TEMPERATURA SQL statement */
-   sql = "CREATE TABLE TEMPERATURA("  \
+   sql = "CREATE TABLE IF NOT EXISTS TEMPERATURA("  \
          "DATA 			 DATATIME  NOT NULL," \
          "TEMPERATURA    INT    NOT NULL," \
          "VENT	         INT 	NOT NULL );";
@@ -431,7 +432,7 @@ int main(int argc, char ** argv)
    }
 	
 	/* Create TAULA ALARMES SQL statement */
-   sql = "CREATE TABLE ALARMES("  \
+   sql = "CREATE TABLE IF NOT EXISTS ALARMES("  \
          "DATA 			DATATIME   ," \
          "TEMPS_ON	    INT 	NOT NULL );";
 
