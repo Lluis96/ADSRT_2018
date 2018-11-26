@@ -1,6 +1,10 @@
 // Per compilar el programa :  //gcc informe.c  -lsqlite3 -o informe
 // Per compilar el programa per la raspberry: arm-linux-gnueabi-gcc informe.c -o informe -L. -lsqlite3 -I/usr/include (imporntat que la llibreria  libsqlite3.so) 
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <fcntl.h>
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -14,6 +18,12 @@
 #include <sqlite3.h>
 #include <getopt.h>
 #include <string.h>
+
+#include <email.h> //llibreria per fer servir la funció enviarmail
+
+
+
+
 
 /*! comunicacio important a B115200  */
 #define BAUDRATE B115200  //IMPORTANTE QUE SEA 115200
@@ -56,6 +66,7 @@ char variable[30];
 char dataalarma[30];
 char ton_fan[30];
 
+char informefinal[1000];
 //-------------Start funcio callbacksql ------------------------------------------------
 // callback que es fa servir quan el resultat de la busqueda son varis valor -> taula alarmes
 static int callbacksql(void *NotUsed, int argc, char **argv, char **azColName) {
@@ -92,8 +103,8 @@ static int callbacksql2(void *NotUsed, int argc, char **argv, char **azColName) 
 
 void informe (char startdata[30],char finishdata[30],char Tmax[30], char Tmin[30],char Tavg[30],char tempsontotal[30],char tempsavgtotal[30],char numcopsfan[30])
 {
-char informe[1000];
-sprintf(informe,"INFORME SEGUIMENT TEMPERATURA\n\
+
+sprintf(informefinal,"SUBJECT:INFORME SEGUIMENT TEMPERATURA\nINFORME SEGUIMENT TEMPERATURA\n\
 		----------------------------\n\
 		Data inici: %s\t\tData final: %s\n\
 		Temperatura màxima (ºC): %s\n\
@@ -103,9 +114,9 @@ sprintf(informe,"INFORME SEGUIMENT TEMPERATURA\n\
 		Temps mitja ventilador ON (s): %s\n\
 		Número cops que ha funciuonat el ventilador: %s \n\
 		----------------------------\n\
-		A continuació es mostra una llista de d'alarmes:\n%s\n",startdata,finishdata,Tmax,Tmin,Tavg,tempsontotal,tempsavgtotal,numcopsfan);
+		Llista de les alarmes\n%s\n.\n",startdata,finishdata,Tmax,Tmin,Tavg,tempsontotal,tempsavgtotal,numcopsfan);
 		
-		printf("%s\n",informe);
+		printf("%s\n",informefinal);
 }
 //}
 //-------------Final creació del informe -----------------------------------------------
@@ -235,4 +246,12 @@ int main(int argc, char ** argv)
    //---------------------------Final instruccions sql------------------------------------------------
   
    informe (startdata,finishdata,Tmax, Tmin,Tavg,tempsontotal,tempsavgtotal,numcopsfan);
+  
+	char De[]="1393272@campus.euss.org";
+	char To[]="1393272@campus.euss.org";
+	
+	enviar_mail(De, To, informefinal);
+	
+   return 0;
+   
 }
