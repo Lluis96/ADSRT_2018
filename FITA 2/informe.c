@@ -1,4 +1,5 @@
 // Per compilar el programa :  //gcc informe.c  -lsqlite3 -o informe
+// Per compilar el programa per la raspberry: arm-linux-gnueabi-gcc informe.c -o informe -L. -lsqlite3 -I/usr/include (imporntat que la llibreria  libsqlite3.so) 
 
 #include <fcntl.h>
 #include <termios.h>
