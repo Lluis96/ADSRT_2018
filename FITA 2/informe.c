@@ -20,7 +20,7 @@
 #include <string.h>
 
 #include <email.h> //llibreria per fer servir la funció enviarmail
-
+#include <funcions.h> 
 
 
 
@@ -66,7 +66,9 @@ char variable[30];
 char dataalarma[30];
 char ton_fan[30];
 
-char informefinal[1000];
+char *De="1393272@campus.euss.org";
+char *To="1393272@campus.euss.org";
+	
 //-------------Start funcio callbacksql ------------------------------------------------
 // callback que es fa servir quan el resultat de la busqueda son varis valor -> taula alarmes
 static int callbacksql(void *NotUsed, int argc, char **argv, char **azColName) {
@@ -101,28 +103,37 @@ static int callbacksql2(void *NotUsed, int argc, char **argv, char **azColName) 
 //-------------Start creació del informe -----------------------------------------------
 //char montarinforme (char *datahorainici, char *datahorafinal, int *tempmax, int *tempmin, int *tempavg, int *totaltime, int *timeavg, int *venttimes){
 
-void informe (char startdata[30],char finishdata[30],char Tmax[30], char Tmin[30],char Tavg[30],char tempsontotal[30],char tempsavgtotal[30],char numcopsfan[30])
-{
 
-sprintf(informefinal,"SUBJECT:INFORME SEGUIMENT TEMPERATURA\nINFORME SEGUIMENT TEMPERATURA\n\
-		----------------------------\n\
-		Data inici: %s\t\tData final: %s\n\
-		Temperatura màxima (ºC): %s\n\
-		Temperatura mínima(ºC): %s\n\
-		Temperatura mitjana(ºC): %s \n\
-		Temps total ventilador ON (s): %s \n\
-		Temps mitja ventilador ON (s): %s\n\
-		Número cops que ha funciuonat el ventilador: %s \n\
-		----------------------------\n\
-		Llista de les alarmes\n%s\n.\n",startdata,finishdata,Tmax,Tmin,Tavg,tempsontotal,tempsavgtotal,numcopsfan);
-		
-		printf("%s\n",informefinal);
-}
 //}
 //-------------Final creació del informe -----------------------------------------------
 
 int main(int argc, char ** argv)
 {
+	
+	int c;
+	while ((c = getopt(argc, argv, "d:t:h")) != -1) {
+		switch (c) {
+		case 'd':
+			De=optarg;	
+			printf("El correu remitent es: %s\n",De);
+			
+			break;
+		case 't':
+			To=optarg;
+			printf("El correu destí es: %s\n",To);
+			break;
+		case '?':
+			printf("Opció desconeguda prem '-h' per veure l'ajuda.\n");
+			break;
+		default:
+			abort();
+		}
+	}
+	
+	
+	
+	
+	
 	char Tmax[30],Tmin[30],Tavg[30],startdata[30], finishdata[30],tempsontotal[30],tempsavgtotal[30],numcopsfan[30]; // variables on guardar les consultes sql
 	char basedatos[50]="database.db";
 	
@@ -245,11 +256,10 @@ int main(int argc, char ** argv)
 	 printf ("Numero de cops funcionant ventilador ON: %s\n",numcopsfan);
    //---------------------------Final instruccions sql------------------------------------------------
   
-   informe (startdata,finishdata,Tmax, Tmin,Tavg,tempsontotal,tempsavgtotal,numcopsfan);
-  
-	char De[]="1393272@campus.euss.org";
-	char To[]="1393272@campus.euss.org";
-	
+   char informefinal[1000];
+   
+   informe (&(informefinal[0]), startdata,finishdata,Tmax, Tmin,Tavg,tempsontotal,tempsavgtotal,numcopsfan);
+  printf("%s", De);
 	enviar_mail(De, To, informefinal);
 	
    return 0;
