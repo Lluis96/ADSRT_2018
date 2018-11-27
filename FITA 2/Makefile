@@ -1,6 +1,6 @@
 all: compilar 
 
-compilar: testmail.o libemail.so
+compilar: informe.o libemail.so
 	gcc -o main informe.o -lsqlite3 -L/home/alumne/Escriptori/ADSRT_2018/FITA\ 2 -lemail 
 
 email.o: email.c
@@ -9,12 +9,21 @@ email.o: email.c
 libemail.so: email.o
 	gcc -shared -fPIC -o libemail.so email.o
 
-testmail.o: informe.c
+informe.o: informe.c
 	gcc -c -o informe.o -lsqlite3 informe.c -I/home/alumne/Escriptori/ADSRT_2018/FITA\ 2
 
 exec: compilar
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/alumne/Escriptori/ADSRT_2018/FITA\ 2 ./main
 	
 clean: 
-	
 	rm -rf *o main
+
+
+compilar_captura.o: captura.c
+	gcc -c -o captura.o captura.c -lsqlite3 -lrt -lpthread -I/home/alumne/Escriptori/ADSRT_2018/FITA\ 2
+
+construir_captura.o: compilar_captura.o
+	 gcc -o captura captura.o -lsqlite3 -lrt -lpthread -L/home/alumne/Escriptori/ADSRT_2018/FITA\ 2 -lemail 
+
+executar_captura.o: construir_captura.o
+	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/alumne/Escriptori/ADSRT_2018/FITA\ 2 ./captura
