@@ -46,9 +46,9 @@ sqlite3_stmt *stmt;
 //-------------Final declaració variables de sql--------------------------------------------
 
 //-------------start declaració ordres de sql--------------------------------------------
-char *sqlTmax= "SELECT MAX (TEMPERATURA) FROM TEMPERATURA;";
-char *sqlTmin= "SELECT MIN (TEMPERATURA) FROM TEMPERATURA;";
-char *sqlTavg= "SELECT AVG (TEMPERATURA) FROM TEMPERATURA;";
+char *sqlTmax= "SELECT MAX (TEMPERATURA) FROM TEMPERATURA WHERE DATA BETWEEN  '26/10/2018 00:00:00' AND '26/10/2018 23:59:59';";
+char *sqlTmin= "SELECT MIN (TEMPERATURA) FROM TEMPERATURA WHERE DATA BETWEEN  '26/10/2018 00:00:00' AND '26/10/2018 23:59:59';";
+char *sqlTavg= "SELECT AVG (TEMPERATURA) FROM TEMPERATURA WHERE DATA BETWEEN  '26/10/2018 00:00:00' AND '26/10/2018 23:59:59';";
 char *sqldatainici= "SELECT (DATA) FROM TEMPERATURA order by DATA asc limit 1;";	//char *sql4= "SELECT (Data_i_Hora) WHERE Id=1 FROM historic5;";
 char *sqldatafinal= "SELECT (DATA) FROM TEMPERATURA order by DATA desc limit 1;"; //////////////////
 char *sqltotaltimefan= "SELECT SUM(TEMPS_ON) FROM ALARMES ;";
