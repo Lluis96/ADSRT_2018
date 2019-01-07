@@ -1,7 +1,7 @@
 all: compilar 
 
 compilar: informe.o funcions.o libemail.so
-	gcc -o informe informe.o funcions.o -lsqlite3 -L/home/alumne/Escriptori/ADSRT_2018/FITA\ 2 -lemail 
+	gcc -o informe informe.o funcions.o -lsqlite3 -lrt -L/home/alumne/Escriptori/ADSRT_2018/FITA\ 2 -lemail 
 
 email.o: email.c
 	gcc  -fPIC -c -o email.o email.c
@@ -13,7 +13,7 @@ libemail.so: email.o funcions.o
 	gcc -shared -fPIC -o libemail.so email.o 
 
 informe.o: informe.c
-	gcc -c -o informe.o -lsqlite3 informe.c -I/home/alumne/Escriptori/ADSRT_2018/FITA\ 2
+	gcc -c -o informe.o -lsqlite3 -lrt informe.c -I/home/alumne/Escriptori/ADSRT_2018/FITA\ 2
 
 exec: compilar
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/alumne/Escriptori/ADSRT_2018/FITA\ 2 ./informe
