@@ -25,7 +25,6 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */        
 
 typedef void (timer_callback) (union sigval);
-
 /* Funció set_timer
  * 
  * Crear un timer
@@ -63,19 +62,21 @@ int set_timer(timer_t * timer_id, float delay, float interval, timer_callback * 
     return 0;
 }
 
-
-
-int main(int argc, char ** argv)
-{
-	// Defineix punter a una estructura tm
+void fecha_informe (){
+// Defineix punter a una estructura tm
     struct tm * p_data;
     char fecha[80];
     char fecha_daybefore[80];
     char fecha_day[80];
     char dia [10];
     char dia_before [10];
-  
-    
+	//-------------start variables ordres de sql--------------------------------------------
+	char sqlTmax[80],sqlTmin[80],sqlTavg[80],sqlavgtimefan[80],sqlcounttimefan[80];
+	char *sqldatainici= "SELECT (DATA) FROM TEMPERATURA order by DATA asc limit 1;";	//char *sql4= "SELECT (Data_i_Hora) WHERE Id=1 FROM historic5;";
+	char *sqldatafinal= "SELECT (DATA) FROM TEMPERATURA order by DATA desc limit 1;"; //////////////////
+	char *sqltotaltimefan= "SELECT SUM(TEMPS_ON) FROM ALARMES ;";
+	char *sqlalarmestable= "SELECT * FROM ALARMES;";
+	char *sqltemp= "SELECT * FROM TEMPERATURA;";
     int op;
     
     //Definim una variable de tipus time_t
@@ -86,13 +87,12 @@ int main(int argc, char ** argv)
     /*---------------------------------------------------------------------------------------------*/
 	//Funcion localtime() per traduir segons UTC a la hora:minuts:segons de la hora local
 	//struct tm *localtime(const time_t *timep);
+	
     p_data = localtime( &temps );
 	
 	strftime(fecha, 80,"%d/%m/%Y",p_data);
 	
 	strcpy(fecha_daybefore, fecha);
-	
-	
 	
 	strftime(dia, 10,"%d",p_data);
 	
@@ -117,7 +117,33 @@ int main(int argc, char ** argv)
 	printf ("fecha:\t\t%s\n",fecha_day);
 	printf ("fecha before:\t%s\n",fecha_daybefore);
 	
-
     /*--------------------------------------------------------------------------------------------*/
+   
+    sprintf(sqlTmax,"SELECT MAX (TEMPERATURA) FROM TEMPERATURA WHERE DATA BETWEEN  '%s' AND '%s';",fecha_daybefore,fecha_day);
+    printf ("sqlTmax:\t%s\n",sqlTmax);
+    
+    sprintf(sqlTmin,"SELECT MIN (TEMPERATURA) FROM TEMPERATURA WHERE DATA BETWEEN  '%s' AND '%s';",fecha_daybefore,fecha_day);
+    printf ("sqlTmin:\t%s\n",sqlTmin);
+    
+    sprintf(sqlTavg,"SELECT AVG (TEMPERATURA) FROM TEMPERATURA WHERE DATA BETWEEN  '%s' AND '%s';",fecha_daybefore,fecha_day);
+    printf ("sqlTmin:\t%s\n",sqlTavg);
+    
+    sprintf(sqlavgtimefan,"SELECT AVG (VENT) FROM TEMPERATURA WHERE DATA BETWEEN  '%s' AND '%s';",fecha_daybefore,fecha_day);
+    printf ("sqlavgtimefan:\t%s\n",sqlavgtimefan);
+   
+    sprintf(sqlcounttimefan,"SELECT COUNT (VENT) FROM TEMPERATURA WHERE DATA BETWEEN '%s' AND '%s' AND VENT > 0;",fecha_daybefore,fecha_day);
+    printf ("sqlcounttimefan:\t%s\n",sqlcounttimefan); // S'HA DE MIRAR SI FUNCIONA CORRECTAMENT
+    
+    printf("sqldatainici:\t%s\n",sqldatainici);
+    printf("sqldatafinal:\t%s\n",sqldatafinal);
+    printf("sqltotaltimefan:\t%s\n",sqltotaltimefan);
+    printf("sqlalarmestable:\t%s\n",sqlalarmestable);
+    printf("sqltemp:\t%s\n",sqltemp);
+    
+}
+
+int main(int argc, char ** argv)
+{
+	fecha_informe();
 
 	}
