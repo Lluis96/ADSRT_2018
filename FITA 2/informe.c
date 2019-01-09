@@ -53,8 +53,8 @@ sqlite3_stmt *stmt;
 	//char *sqltemp= "SELECT * FROM TEMPERATURA;";
 	
     int op;
-    int j;
-    
+    int j,i;
+    float mediafan;
 	char variable[80]; //es fa servir callback2
 	char dataalarma[30][30]; //es fa servir callback
 	char ton_fan[30][30]; //es fa servir callback
@@ -140,72 +140,70 @@ void fecha_informe (){
 	
 	sprintf(fecha_day,"%s 23:59:59",fecha_daybefore);
 	sprintf(fecha_daybefore_dos,"%s 00:00:00",fecha_daybefore);
+
+}
+
+void generar_informe(){
+	// Generació del informe
+	sprintf(llistaalarmes,"SUBJECT:INFORME SEGUIMENT TEMPERATURA\nINFORME SEGUIMENT TEMPERATURA\n");
+	sprintf(llistaalarmes,"%s\nData/hora inici %s\n",llistaalarmes,fecha_daybefore_dos);
+	sprintf(llistaalarmes,"%s\nData/hora final %s\n",llistaalarmes,fecha_day);
+	sprintf (llistaalarmes,"%s\nTemperatura maxima: %s",llistaalarmes,Tmax);
+	sprintf (llistaalarmes,"%s\nTemperatura minima: %s",llistaalarmes,Tmin);
+	sprintf (llistaalarmes,"%s\nTemperatura mediana: %s",llistaalarmes,Tavg);
+	sprintf (llistaalarmes,"%s\nTemps total que ha estat funcionant el ventilador (s): %s",llistaalarmes,tempsontotal);
+	sprintf (llistaalarmes,"%s\nTemps mitja de funcionant el ventilador (s): %.2f\n",llistaalarmes,mediafan);
+	sprintf (llistaalarmes,"%s\nNumero de cops  que ha estat funcionant el ventilador (s): %s\n",llistaalarmes,numcopsfan);
+	sprintf (llistaalarmes,"%s\nLLista d'alarmes:\n",llistaalarmes);
+	sprintf (llistaalarmes,"%s\n %s %s",llistaalarmes,dataalarma[0],ton_fan[0]);
 	
-	printf ("fecha:\t\t%s\n",fecha_day);
-	printf ("fecha before:\t%s\n",fecha_daybefore_dos);
+	for(i = 1; i<j; i++) {
+	sprintf (llistaalarmes,"%s %s %s",llistaalarmes,dataalarma[i],ton_fan[i]);
 	
-    /*--------------------------------------------------------------------------------------------*/
+	}
+	sprintf (llistaalarmes,"%s\n.\n",llistaalarmes);
+	//printf("%s\n",llistaalarmes);
 	
-    
-    //sprintf(sqlTmin,"SELECT MIN (TEMPERATURA) FROM TEMPERATURA WHERE DATA BETWEEN  '%s' AND '%s';",fecha_daybefore_dos,fecha_day);
-   // printf ("sqlTmin:\t%s\n",sqlTmin);
- 
-    
-    sprintf(sqlTavg,"SELECT AVG (TEMPERATURA) FROM TEMPERATURA WHERE DATA BETWEEN  '%s' AND '%s';",fecha_daybefore_dos,fecha_day);
-   // printf ("sqlTmin:\t%s\n",sqlTavg);
-    
-    
-   
-   // printf ("sqlcounttimefan:\t%s\n",sqlcounttimefan); // S'HA DE MIRAR SI FUNCIONA CORRECTAMENT
-    
-  //  printf("sqldatainici:\t%s\n",sqldatainici);
-  //  printf("sqldatafinal:\t%s\n",sqldatafinal);
-  //  printf("sqltotaltimefan:\t%s\n",sqltotaltimefan);
-  //  printf("sqltemp:\t%s\n",sqltemp);
-  
 }
 
 //-------------Start funcio callbacksql ------------------------------------------------
 // callback que es fa servir quan el resultat de la busqueda son varis valor -> taula alarmes
-
 static int callbacksql(void *NotUsed, int argc, char **argv, char **azColName) {
    int i;
    for(i = 0; i<argc; i++) {
      // printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
       if (i==0){
 	  sprintf(dataalarma[j],"%s\n", argv[i] ? argv[i] : "NULL");
-	  printf("dataalarma %s \n",dataalarma[j]);
+		//printf("dataalarma %s \n",dataalarma[j]);
 	  }
       else if (i==1){
 		sprintf(ton_fan[j],"%s\n", argv[i] ? argv[i] : "NULL");
-		printf("ton fan %s \n",ton_fan[j]);
+		//printf("ton fan %s \n",ton_fan[j]);
 	  }
    }
     j++;
-   printf("\n");
+   //printf("\n");
    return 0;
 }
-
-
-
 
 // callback que es fa servir quan el resultat de la busqueda es un valor 
 static int callbacksql2(void *NotUsed, int argc, char **argv, char **azColName) {
    int i;
    for(i = 0; i<argc; i++) {
-      printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+      //printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
       sprintf(variable, "%s\n", argv[i] ? argv[i] : "NULL");
    }
    
    return 0;
 }
 
-
-
 int main(int argc, char ** argv)
 {
-	
 	int c;
+	int numcopsfanint;
+	char basedatos[50]="database.db";
+	
+	/* get opt */
 	while ((c = getopt(argc, argv, "d:t:h")) != -1) {
 		switch (c) {
 		case 'd':
@@ -225,7 +223,6 @@ int main(int argc, char ** argv)
 		}
 	}
 	
-	char basedatos[50]="database.db";
 	/* Open database */
 	rc = sqlite3_open(basedatos, &db);
 	
@@ -236,31 +233,10 @@ int main(int argc, char ** argv)
       fprintf(stdout, "Opened database successfully\n");
    }
    
-	fecha_informe();
-	
-	//// 1- Llista alarmes
-	//printf ("1-Llista alarmes: \n"); 
-	//sprintf(sqlalarmestable,"SELECT * FROM ALARMES WHERE DATA BETWEEN  '%s' AND '%s';",fecha_daybefore,fecha_day);
-   // printf ("sqlalarmestable:\t%s\n",sqlalarmestable); // S'HA DE MIRAR SI FUNCIONA CORRECTAMENT
-	//printf ("SENTENCIA SQL: %s \n",sqlalarmestable); 
-	//rc = sqlite3_exec(db, sqlalarmestable, callbacksql, 0, &zErrMsg);
-
-	   //if( rc != SQLITE_OK ){
-	   //fprintf(stderr, "SQL error: %s\n", zErrMsg);
-		  //sqlite3_free(zErrMsg);
-	   //} else {
-		  //fprintf(stdout, "Select datos correctamente\n");
-	   //}
-	   
-	   //printf ("data alarma: %s\n",dataalarma);
-	   //printf ("ton_fan: %s\n",ton_fan);
-	  
-	 // 2- Busquem la temperatura maxima de la base de dades  
+	fecha_informe(); // funcio que calcula el dia anterior per generar l'informe
 	 
-	//printf ("2- Busquem la temperatura maxima de la base de dades: \n"); 
+	 // 1- Busquem la temperatura maxima de la base de dades  
     sprintf(sqlTmax,"SELECT MAX (TEMPERATURA) FROM TEMPERATURA WHERE DATA BETWEEN  '%s' AND '%s';",fecha_daybefore_dos,fecha_day);
-    //printf ("sqlTmax:\t%s\n",sqlTmax);
-    
     rc = sqlite3_exec(db, sqlTmax, callbacksql2, 0, &zErrMsg);
 	   if( rc != SQLITE_OK ){
 	   fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -269,14 +245,9 @@ int main(int argc, char ** argv)
 		  fprintf(stdout, "Select datos correctamente\n");
 	   }
 	 strcpy(Tmax,variable);
-	 //printf ("Temperatura maxima: %s\n",Tmax);
 	
-	
-	// 3- Busquem la temperatura min de la base de dades  
-	//printf (" 3- Busquem la temperatura min de la base de dades  : \n"); 
+	// 2- Busquem la temperatura min de la base de dades  
     sprintf(sqlTmin,"SELECT MIN (TEMPERATURA) FROM TEMPERATURA WHERE DATA BETWEEN  '%s' AND '%s';",fecha_daybefore_dos,fecha_day);
-    //printf ("sqlTmax:\t%s\n",sqlTmin);
-    
 	 rc = sqlite3_exec(db, sqlTmin, callbacksql2, 0, &zErrMsg);
 	   if( rc != SQLITE_OK ){
 	   fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -285,9 +256,9 @@ int main(int argc, char ** argv)
 		  fprintf(stdout, "Select datos correctamente\n");
 	   }
 	 strcpy(Tmin,variable);
-	 printf ("Temperatura minima: %s\n",Tmin);
 	 
-	 // 4- Busquem la temperatura avg de la base de dades  
+	 // 3- Busquem la temperatura avg de la base de dades  
+	 sprintf(sqlTavg,"SELECT AVG (TEMPERATURA) FROM TEMPERATURA WHERE DATA BETWEEN  '%s' AND '%s';",fecha_daybefore_dos,fecha_day);
 	 rc = sqlite3_exec(db, sqlTavg, callbacksql2, 0, &zErrMsg);
 	   if( rc != SQLITE_OK ){
 	   fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -296,9 +267,8 @@ int main(int argc, char ** argv)
 		  fprintf(stdout, "Select datos correctamente\n");
 	   }
 	 strcpy(Tavg,variable);
-	 //printf ("Temperatura mediana: %s\n",Tavg);
 	 
-	 // 5- Busquem el temps que el ventilador ha estat funcionant   
+	 // 4- Busquem el temps que el ventilador ha estat funcionant   
 	 sprintf(sqlcounttimefan,"SELECT COUNT(*) FROM TEMPERATURA WHERE VENT>0 AND DATA BETWEEN '%s' AND '%s' ;",fecha_daybefore_dos,fecha_day);
 	 rc = sqlite3_exec(db, sqlcounttimefan, callbacksql2, 0, &zErrMsg);
 	   if( rc != SQLITE_OK ){
@@ -308,18 +278,15 @@ int main(int argc, char ** argv)
 		  fprintf(stdout, "Select datos correctamente\n");
 	   }
 	 strcpy(numcopsfan,variable);
-	 strcpy(tempsontotal,variable);
+	 strcpy(tempsontotal,variable); // el temps total sera el mateix que el numero de cops que s'ensengui el ventilador
 	 
-	 int numcopsfanint;
-	
+	// 5- Calculem la mitjana de minuts que ha funcionat el ventilador 
 	 numcopsfanint = atoi (numcopsfan);
-	 printf("Minutos totales encendido: %d \n\n",numcopsfanint);
-	 float mediafan = numcopsfanint/1440.0;
-	 printf ("Temps mitja de funcionant el ventilador (s): %f\n",mediafan);
-
-	j=0; 
+	 mediafan = numcopsfanint/1440.0; // calcula la mitjana funcionament del ventilador i es guarda a la variable global mediafan
+	
 	//6- Llista alarmes 
 	sprintf(sqlalarmestable,"SELECT * FROM ALARMES WHERE DATA BETWEEN '%s' AND '%s' ;",fecha_daybefore_dos,fecha_day);
+	j=0; //reiniciem la variable j que es fa servir en el callback
 	rc = sqlite3_exec(db, sqlalarmestable, callbacksql, 0, &zErrMsg);
 	   if( rc != SQLITE_OK ){
 	   fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -328,32 +295,9 @@ int main(int argc, char ** argv)
 		  fprintf(stdout, "Select datos correctamente\n");
 	   }
 	  
-	// Generació del informe
-	sprintf(llistaalarmes,"SUBJECT:INFORME SEGUIMENT TEMPERATURA\nINFORME SEGUIMENT TEMPERATURA\n");
-	sprintf(llistaalarmes,"%s\nData/hora inici %s\n",llistaalarmes,fecha_daybefore_dos);
-	sprintf(llistaalarmes,"%s\nData/hora final %s\n",llistaalarmes,fecha_day);
-	sprintf (llistaalarmes,"%s\nTemperatura maxima: %s",llistaalarmes,Tmax);
-	sprintf (llistaalarmes,"%s\nTemperatura minima: %s",llistaalarmes,Tmin);
-	sprintf (llistaalarmes,"%s\nTemperatura mediana: %s",llistaalarmes,Tavg);
-	sprintf (llistaalarmes,"%s\nTemps total que ha estat funcionant el ventilador (s): %s",llistaalarmes,tempsontotal);
-	sprintf (llistaalarmes,"%s\nTemps mitja de funcionant el ventilador (s): %.2f\n",llistaalarmes,mediafan);
-	sprintf (llistaalarmes,"%s\nNumero de cops  que ha estat funcionant el ventilador (s): %s\n",llistaalarmes,numcopsfan);
-	sprintf (llistaalarmes,"%s\nLLista d'alarmes:\n",llistaalarmes);
+	generar_informe(); // funcio que genera l'informe
 	
-	
-	int i;
-	
-	
-	sprintf (llistaalarmes,"%s\n %s %s",llistaalarmes,dataalarma[0],ton_fan[0]);
-	
-	for(i = 1; i<j; i++) {
-	sprintf (llistaalarmes,"%s %s %s",llistaalarmes,dataalarma[i],ton_fan[i]);
-	
-	}
-	sprintf (llistaalarmes,"%s\n.\n",llistaalarmes);
-	printf("%s\n",llistaalarmes);
-	
-	enviar_mail(De, To, llistaalarmes);
+	enviar_mail(De, To, llistaalarmes); // funcio que envia el missatge llistaalarmes per e-mail 
 	
 	return 0;
 	
