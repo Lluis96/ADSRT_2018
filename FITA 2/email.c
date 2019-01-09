@@ -29,8 +29,8 @@ void enviar_mail( char *From, char *RCPT, char *body_mail){
 	int			sFd;
 	int			mlen;
 	int 		result;
-	char		buffer[256];
-	char		missatge[] = "HELO AE2012\n";
+	char		buffer[1024];
+	char		missatge[] = "HELO AE2009\n";
 	char		missatge2[80];
 	char		missatge3[80];
 	char		missatge4[] = "DATA\n";
@@ -62,7 +62,7 @@ void enviar_mail( char *From, char *RCPT, char *body_mail){
 
 
 	/*Rebre missatge de benvinguda*/
-	result = read(sFd, buffer, 256);
+	result = read(sFd, buffer, 1024);
 	printf("Missatge rebut del servidor(bytes %d): %s\n",	result, buffer);
 
 	/*Enviar HELO*/
@@ -71,7 +71,7 @@ void enviar_mail( char *From, char *RCPT, char *body_mail){
 	printf("Missatge enviat a servidor(bytes %d): %s\n",	result, missatge);
 
 	/*Rebre mercuri.euss.es*/
-	result = read(sFd, buffer, 256);
+	result = read(sFd, buffer, 1024);
 	buffer[result]=0;
 	printf("Missatge rebut del servidor(bytes %d): %s\n",	result, buffer);
 	
@@ -81,7 +81,7 @@ void enviar_mail( char *From, char *RCPT, char *body_mail){
 	printf("Missatge enviat a servidor(bytes %d): %s\n",	result, missatge2);
 
 	/*Rebre*/
-	result = read(sFd, buffer, 256);
+	result = read(sFd, buffer, 1024);
 	buffer[result]=0;
 	printf("Missatge rebut del servidor(bytes %d): %s\n",	result, buffer);
 	
@@ -91,7 +91,7 @@ void enviar_mail( char *From, char *RCPT, char *body_mail){
 	printf("Missatge enviat a servidor(bytes %d): %s\n",	result, missatge3);
 
 	/*Rebre*/
-	result = read(sFd, buffer, 256);
+	result = read(sFd, buffer, 1024);
 	buffer[result]=0;
 	printf("Missatge rebut del servidor(bytes %d): %s\n",	result, buffer);
 	
@@ -101,7 +101,7 @@ void enviar_mail( char *From, char *RCPT, char *body_mail){
 	printf("Missatge enviat a servidor(bytes %d): %s\n",	result, missatge4);
 
 	/*Rebre*/
-	result = read(sFd, buffer, 256);
+	result = read(sFd, buffer, 1024);
 	buffer[result]=0;
 	printf("Missatge rebut del servidor(bytes %d): %s\n",	result, buffer);
 	
@@ -111,7 +111,7 @@ void enviar_mail( char *From, char *RCPT, char *body_mail){
 	printf("Missatge enviat a servidor(bytes %d): %s\n",	result, body_mail);
 
 	/*Rebre*/
-	result = read(sFd, buffer, 256);
+	result = read(sFd, buffer, 1024);
 	buffer[result]=0;
 	printf("Missatge rebut del servidor(bytes %d): %s\n",	result, buffer);
 	
@@ -121,7 +121,7 @@ void enviar_mail( char *From, char *RCPT, char *body_mail){
 	printf("Missatge enviat a servidor(bytes %d): %s\n",	result, missatge6);
 
 	/*Rebre*/
-	result = read(sFd, buffer, 256);
+	result = read(sFd, buffer, 1024);
 	buffer[result]=0;
 	printf("Missatge rebut del servidor(bytes %d): %s\n",	result, buffer);
 

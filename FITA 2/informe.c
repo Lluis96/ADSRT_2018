@@ -63,7 +63,7 @@ sqlite3_stmt *stmt;
 	char *To="1393272@campus.euss.org";
     
     // variables on guardar les consultes sql
-	char Tmax[80],Tmin[80],Tavg[80],startdata[80], finishdata[80],tempsontotal[80],tempsavgtotal[80],numcopsfan[80],llistaalarmes[8000]; 
+	char Tmax[80],Tmin[80],Tavg[80],startdata[80], finishdata[80],tempsontotal[80],tempsavgtotal[80],numcopsfan[80],llistaalarmes[1000]; 
 
 typedef void (timer_callback) (union sigval);
 /* Funció set_timer
@@ -329,7 +329,7 @@ int main(int argc, char ** argv)
 	   }
 	  
 	// Generació del informe
-	printf("------------------Generem informe------------------------\n");
+	sprintf(llistaalarmes,"SUBJECT:INFORME SEGUIMENT TEMPERATURA\nINFORME SEGUIMENT TEMPERATURA\n");
 	sprintf(llistaalarmes,"%s\nData/hora inici %s\n",llistaalarmes,fecha_daybefore_dos);
 	sprintf(llistaalarmes,"%s\nData/hora final %s\n",llistaalarmes,fecha_day);
 	sprintf (llistaalarmes,"%s\nTemperatura maxima: %s",llistaalarmes,Tmax);
@@ -338,19 +338,22 @@ int main(int argc, char ** argv)
 	sprintf (llistaalarmes,"%s\nTemps total que ha estat funcionant el ventilador (s): %s",llistaalarmes,tempsontotal);
 	sprintf (llistaalarmes,"%s\nTemps mitja de funcionant el ventilador (s): %.2f\n",llistaalarmes,mediafan);
 	sprintf (llistaalarmes,"%s\nNumero de cops  que ha estat funcionant el ventilador (s): %s\n",llistaalarmes,numcopsfan);
-	sprintf (llistaalarmes,"\nLLista d'alarmes:\n");
-
+	sprintf (llistaalarmes,"%s\nLLista d'alarmes:\n",llistaalarmes);
+	
+	
 	int i;
 	
 	
-	sprintf (llistaalarmes,"%s\n %s %s\n",llistaalarmes,dataalarma[0],ton_fan[0]);
+	sprintf (llistaalarmes,"%s\n %s %s",llistaalarmes,dataalarma[0],ton_fan[0]);
 	
 	for(i = 1; i<j; i++) {
-	sprintf (llistaalarmes,"%s %s %s\n",llistaalarmes,dataalarma[i],ton_fan[i]);
-	//printf ("%s %s\n",dataalarma[i],ton_fan[i]);	
+	sprintf (llistaalarmes,"%s %s %s",llistaalarmes,dataalarma[i],ton_fan[i]);
+	
 	}
-	printf ("-------------------------------------\n");
-	printf ("%s\n",llistaalarmes);
+	sprintf (llistaalarmes,"%s\n.\n",llistaalarmes);
+	printf("%s\n",llistaalarmes);
+	
+	enviar_mail(De, To, llistaalarmes);
 	
 	return 0;
 	
