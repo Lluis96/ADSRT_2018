@@ -5,6 +5,7 @@
 /*!
  * (c) EUSS 2013
  *
+ *
  * Author    Lluis Farnes
    * Copyright (C) 2017 Lluis Farnes
    *e-mail: 1393274@campus.euss.org+
@@ -13,7 +14,7 @@
  * Crea dos timers que es disparen cada segon de forma alternada
  * Cada cop que es disparen imprimeixen per pantalla un missatge
  * 
- * Per compilar: gcc main.c -lsqlite3 -lrt -lpthread -o main
+ * Per compilar: gcc captura.c -lsqlite3 -lrt -lpthread -o captura
  */
  
 #include <fcntl.h>                                                        
@@ -59,7 +60,7 @@ int vent=0;
 	/**
  * @brief Variable amb la temperatura de consigna
  */
-int Temperatura_regulacio=10;
+int Temperatura_regulacio=32;
 	/**
  * @brief Variable amb la temperatura actual
  */
@@ -267,7 +268,7 @@ void TancarSerie(int fd)
 	int y;
 	/*CONTROL VARIABLE TAULA TEMPERATURA + ESTAT VENTILADOR*/
 	//T=temp. actual ha d'estar ja processada 
-	//T=temperatura de regulacio
+	//Treg=temperatura de regulacio
 	//vent= Estat del ventilador (0:apagat,1:posem funcionament, 2: continuem en funcionament)
 	//alarma= Flag per saltar alarma 
 	
@@ -447,7 +448,7 @@ int main(int argc, char ** argv)
    }
 	
 	
-	sprintf(missatge,"AM1104Z",temps, mostres);
+	sprintf(missatge,"AM1011Z",temps, mostres);
 	printf("%s\n",missatge);//es verfifica pel terminal el missatge enviat
 	enviar(missatge, res, fd);
 	
@@ -487,15 +488,13 @@ int main(int argc, char ** argv)
 			printf("%s\n",buf);
 			
 			//Calculo de la temperatura
-			Temperatura_actual=(buf[3]-48)*100+(buf[4]-48)*10+(buf[5]-48)+(buf[6]-48)*0.1;
-			Temperatura_actual= (5* Temperatura_actual *100)/1024 ;
-			
-			//printf	("TEMPERATURA CALCULADA = %d \n",Temperatura_actual);
-			
+			Temperatura_actual=(buf[3]-48)*1000+(buf[4]-48)*100+(buf[5]-48)*10+(buf[6]-48)*1;
+			//Temperatura_actual= (5* Temperatura_actual *100)/1024 ;
+				
 			y = regulacio_Temp (Temperatura_actual,Temperatura_regulacio);/*<---------ES COMPARA T AMB TREG I POSA BASE DADES*/
 			
 			if (y==1){ //En cas que la temperatura sobrepassa la temperatura de regulacio--> Encen ventilador
-				sprintf(missatge,"AS130Z");//s'executen les probes amb el led13
+				sprintf(missatge,"AS120Z");//s'executen les probes amb el led13
 				printf("Apaguem ventilador: %s\n",missatge);//es verfifica pel terminal el missatge enviat
 				enviar(missatge, res, fd);
 				printf("mensaje enviado\n");
@@ -506,7 +505,7 @@ int main(int argc, char ** argv)
 				y=0;
 				}
 			else if (y==2){// Si el ventilador estava engegat i la temperatura < temperatura regulacio --> apaga ventilador
-				sprintf(missatge,"AS131Z"); // s'executen les probes amb el led13
+				sprintf(missatge,"AS121Z"); // s'executen les probes amb el led13
 				printf("Encenem ventilador: %s\n",missatge);//es verfifica pel terminal el missatge enviat
 				enviar(missatge, res, fd);
 				printf("mensaje enviado\n");
