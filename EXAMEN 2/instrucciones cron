@@ -1,0 +1,23 @@
+1- En terminal ejecutar esto: 	
+			env EDITOR=nano crontab -e
+		o esto:
+			crontab -e
+			
+2- Para que envie cada minuto de cada dia de cada semana de cada mes de cada año, en el editor que se te abre
+	escribir:
+			* * * * * /home/alumne/Escriptori/ADSRT_2018/FITA\ 2/cron.sh
+			
+			
+3- Para comprobar que el crontab se esta ejecutando:
+			crontab -l
+			(Y tiene que aparecer la instruccion del paso 2)
+			
+			
+NOTA IMPORTANTE:
+		Dentro del archivo cron.sh tiene que estar la ruta del archivo ejecutable, en nuestro caso informe y
+		el mail des del cual queremos enviar y a donde queremos recibir.
+		
+		#!/bin/bash
+		LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/alumne/Escriptori/ADSRT_2018/FITA\ 2 /home/alumne/Escriptori/ADSRT_2018/FITA\ 2/informe -d 1393272@campus.euss.org -t 1393272@campus.euss.org
+										
+								OJO AQUI^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
