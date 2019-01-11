@@ -5,6 +5,7 @@
 /*!
  * (c) EUSS 2013
  *
+ *
  * Author    Lluis Farnes
    * Copyright (C) 2017 Lluis Farnes
    *e-mail: 1393274@campus.euss.org+
@@ -15,7 +16,7 @@
  * 
  * Per compilar: gcc captura.c -lsqlite3 -lrt -lpthread -o captura
  */
-
+ 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif 
@@ -33,16 +34,16 @@
 #include <sqlite3.h> 
 #include <getopt.h>
 
-
 #include <email.h> //llibreria per fer servir la funció enviarmail
 
 #define BAUDRATE B115200  //IMPORTANTE QUE SEA 115200                                                
 //#define MODEMDEVICE "/dev/ttyS0"        //Conexió IGEP - Arduino
 #define MODEMDEVICE "/dev/ttyACM0"         //Conexió directa PC(Linux) - Arduino                                   
 #define _POSIX_SOURCE 1 /* POSIX compliant source */                       
- 
+
 char De[]="1393272@campus.euss.org";
 char To[]="1393272@campus.euss.org";
+
 /* VARIABLES GLOBALS*/
 
 //variables sql
@@ -68,7 +69,7 @@ int vent=0;
 	/**
  * @brief Variable amb la temperatura de consigna
  */
-int Temperatura_regulacio=10;
+int Temperatura_regulacio=32;
 	/**
  * @brief Variable amb la temperatura actual
  */
@@ -110,8 +111,6 @@ void callback(union sigval si)
     char * msg = (char *) si.sival_ptr;
 	printf("----------------------------\n");
 	x=1;
-	printf("X: %d\n",x);
-    printf("%s\n",msg);
 }
 
 typedef void (timer_callback) (union sigval);
@@ -273,10 +272,10 @@ void TancarSerie(int fd)
 	// Defineix punter a una estructura tm
         struct tm * p_data;
         
-	int y;
+	int y=0;
 	/*CONTROL VARIABLE TAULA TEMPERATURA + ESTAT VENTILADOR*/
 	//T=temp. actual ha d'estar ja processada 
-	//T=temperatura de regulacio
+	//Treg=temperatura de regulacio
 	//vent= Estat del ventilador (0:apagat,1:posem funcionament, 2: continuem en funcionament)
 	//alarma= Flag per saltar alarma 
 	
@@ -295,7 +294,8 @@ void TancarSerie(int fd)
 	else if (T>Treg && vent==2){
 		alarma++;
 		}
-	else if (T<Treg && (vent==2||vent==1)){
+
+	else if (T<=Treg && (vent==2||vent==1)){
 		printf("Apagar ventilador\n");/*<---------ENVIAR ORDRE ARDUINO APAGAR VENT*/
 		tmpsalarma=0;
 		printf("temps alarma%d:\n",tmpsalarma);
@@ -303,10 +303,11 @@ void TancarSerie(int fd)
 		y=1;
 		vent=0;
 	}
+	
 	else {vent=0;}
 
 	//printf("Taula temperatura\n"); /*<---------ESCRIURE TAULA TEMPERATURES SQL*/
-	printf("Temp: %d\n",T);
+	printf("Temperatura: %d \t Temperatura regulación:%d\n",T,Treg);
 	printf("Estat vent: %d\n",vent);
 /*---------------------------------------------------------------------------------------------*/
 	//Funcion localtime() per traduir segons UTC a la hora:minuts:segons de la hora local
@@ -315,7 +316,7 @@ void TancarSerie(int fd)
 	
 	strftime(fecha, 80,"%d/%m/%Y %H:%M:%S",p_data);
 	
-	printf("p_data: '%s'\n ", fecha);
+	printf("Fecha: '%s'\n", fecha);
 	
 	sprintf(sentencia, "insert into TEMPERATURA (DATA,TEMPERATURA, VENT) values ('%s',%d,%d); ",fecha,T, vent);         /* 1 */
 	
@@ -338,8 +339,8 @@ void TancarSerie(int fd)
 		tmpsalarma=tmpsalarma+5;
 		printf("temps alarma%d:\n",tmpsalarma);
 		
-	
 		enviar_mail(De, To, "SUBJECT:ALARMA ACTIVADA\nSOCORRO HACE CALOR \n.\n"); //envia mail de alerta
+
 		
 		printf("!! Salta alarma -> Taula alarmes\n"); /*<---------ESCRIURE TAULA ALARMES SQL*/
 		
@@ -459,7 +460,7 @@ int main(int argc, char ** argv)
    }
 	
 	
-	sprintf(missatge,"AM1104Z",temps, mostres);
+	sprintf(missatge,"AM1011Z",temps, mostres);
 	printf("%s\n",missatge);//es verfifica pel terminal el missatge enviat
 	enviar(missatge, res, fd);
 	
@@ -496,36 +497,34 @@ int main(int argc, char ** argv)
 			enviar(missatge,res,fd);
 			memset(buf,'\0',256);
 			rebre(buf, fd, temps);//comprobació del missatge rebut (només compara que acabi amb la Z)
-			printf("%s\n",buf);
+			//printf("%s\n",buf);
 			
 			//Calculo de la temperatura
-			Temperatura_actual=(buf[3]-48)*100+(buf[4]-48)*10+(buf[5]-48)+(buf[6]-48)*0.1;
+			Temperatura_actual=(buf[3]-48)*1000+(buf[4]-48)*100+(buf[5]-48)*10+(buf[6]-48)*1;
 			//Temperatura_actual= (5* Temperatura_actual *100)/1024 ;
-			
-			//printf	("TEMPERATURA CALCULADA = %d \n",Temperatura_actual);
-			
+				
 			y = regulacio_Temp (Temperatura_actual,Temperatura_regulacio);/*<---------ES COMPARA T AMB TREG I POSA BASE DADES*/
 			
 			if (y==1){ //En cas que la temperatura sobrepassa la temperatura de regulacio--> Encen ventilador
-				sprintf(missatge,"AS130Z");//s'executen les probes amb el led13
-				printf("Apaguem ventilador: %s\n",missatge);//es verfifica pel terminal el missatge enviat
+				sprintf(missatge,"AS120Z");//s'executen les probes amb el led13
+				printf("Apaguem ventilador\n");//es verfifica pel terminal el missatge enviat
 				enviar(missatge, res, fd);
 				printf("mensaje enviado\n");
 				memset(buf,'\0',256);	
 				rebre(buf, fd, temps);
 				printf("mensaje recibido\n");
-				printf("%s\n",buf);
+				//printf("%s\n",buf);
 				y=0;
 				}
 			else if (y==2){// Si el ventilador estava engegat i la temperatura < temperatura regulacio --> apaga ventilador
-				sprintf(missatge,"AS131Z"); // s'executen les probes amb el led13
-				printf("Encenem ventilador: %s\n",missatge);//es verfifica pel terminal el missatge enviat
+				sprintf(missatge,"AS121Z"); // s'executen les probes amb el led13
+				printf("Encenem ventilador\n");//es verfifica pel terminal el missatge enviat
 				enviar(missatge, res, fd);
 				printf("mensaje enviado\n");
 				memset(buf,'\0',256);	
 				rebre(buf, fd, temps);
 				printf("mensaje recibido\n");
-				printf("%s\n",buf);
+				//printf("%s\n",buf);
 				y=0;
 			}
 			else{}
