@@ -1,0 +1,44 @@
+GETOPT
+-------------------------------------------------------------------------------------------------------
+*Para añadir un nuevo caso ("x"):
+1-añadir en instrucción c = getopt (argc,argv, "d:t:hx:")) !=-1) 
+[si se tiene q recibir un texto o un numero poner ":" despues de la letra "x", como caso de "d" o "t"
+
+2- crear un nuevo case 'x':
+
+3.1- Si se recibe texto : variable = optarg;
+3.2- Si se recibe un numero: variable = atoi (optarg);
+
+4-Añadir en el case 'h' un printf explicando como se tiene que poner
+
+Ejemplo de un get opt (todas las lineas tienen que ir en la funcion main):
+	
+
+int c;
+
+while ((c = getopt(argc, argv, "d:t:h")) != -1) {
+		switch (c) {
+		case 'd':
+			//printf("%s\n",argv);
+			sqlite3_close(db);
+			nom_database = optarg;
+			sprintf(basedatos,"%s.db",nom_database);	
+			printf("S'ha cambiat la base de dades\nNova base de dades:\t%s\n",basedatos);
+			
+			break;
+		case 't':
+			Temperatura_regulacio=atoi(optarg);
+			printf("S'ha canviat la temperatura de regulacio\nNova temperatura de regulacio:\t%d\n",Temperatura_regulacio);
+			break;
+		case 'h':
+			printf("\nUso: main [opciones] -n [nombre_archivo.db]...\n\n");
+			printf("-d [nom] Poner solo el nombre sin (.db) Precisa 'nombre_base_datos.db'\n");
+			printf("-t [temperatura regulacion]	Temperatura regulacion . Default = 10º.\n\n");
+			exit(1);
+		case '?':
+			printf("Opció desconeguda prem '-h' per veure l'ajuda.\n");
+			break;
+		default:
+			abort();
+		}
+	}

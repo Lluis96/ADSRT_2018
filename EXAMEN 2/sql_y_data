@@ -1,0 +1,101 @@
+DATABASE SQL
+-------------------------------------
+//En el cas que ens demanin crear una nova database repetir tots els punts a paritr del punt 1
+//En el cas que ens demanin crear una nova taula dins de la databaser repetir els punts a partir del punt 3
+//En el cas que ens demanin crear una nova columna afegir en la ordre del punt 3 la columna com per exemple "DATA","TEMPERATURA", "VENT"
+//La insturccio 4 s'ha de fer cada cop que es vulgui pujar dades a la database
+//En el cas que s'hagi de treballar amb la data veure punt 5
+
+
+static int callbacksql(void *NotUsed, int argc, char **argv, char **azColName) {
+   int i;
+   for(i = 0; i<argc; i++) {
+      printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+   }
+   printf("\n");
+   return 0;
+}
+
+//Aquesta part nomes fa falta copiar si es treballara amb la data 
+
+	time_t temps;
+
+        //Capturem el temps amb la funcio time(time_t *t);
+	temps = time(NULL);
+        //El valor de retorn es a una variable de tipus timei_t, on posaràl temps en segons des de 1970-01-01 00:00:00 +0000 (UTC)
+
+	// struct tm {
+	//     int tm_sec;         /* seconds */
+	//     int tm_min;         /* minutes */
+	//     int tm_hour;        /* hours */
+	//     int tm_mday;        /* day of the month */
+	//     int tm_mon;         /* month */
+	//     int tm_year;        /* year */
+	//     int tm_wday;        /* day of the week */
+	//     int tm_yday;        /* day in the year */
+	//     int tm_isdst;       /* daylight saving time */
+	//};
+
+	// Defineix punter a una estructura tm
+        struct tm * p_data;
+
+
+int main(int argc, char ** argv)
+{
+	//1- Crear la base de dades
+	char basedatos[50]="database.db"; 
+	
+	//2-Obrir la base de dades
+	/* Open database */
+	rc = sqlite3_open(basedatos, &db); 
+	if( rc ) {
+      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+      return(0);
+   } else {
+      fprintf(stdout, "Opened database successfully\n");
+   }
+   
+   
+   // 3-Crear les taules de dins de la base de dades
+     /* Create TAULA TEMPERATURA SQL statement */  
+   sql = "CREATE TABLE IF NOT EXISTS TEMPERATURA("  \
+         "DATA 			 DATATIME  NOT NULL," \
+         "TEMPERATURA    INT    NOT NULL," \
+         "VENT	         INT 	NOT NULL );";
+   /* Execute SQL statement */
+   rc = sqlite3_exec(db, sql, callbacksql, 0, &zErrMsg); //Aqui es on executa la ordre
+   
+   if( rc != SQLITE_OK ){
+   fprintf(stderr, "SQL error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+   } else {
+      fprintf(stdout, "Table TEMPERATURA created successfully\n");
+   }
+   
+   //4-Escriure dades a la database
+   
+   sprintf(sentencia, "insert into TEMPERATURA (DATA,TEMPERATURA, VENT) values ('%s',%d,%d); ",fecha,T, vent);         /* 1 */
+	
+	rc = sqlite3_exec(db, sentencia, callbacksql, 0, &zErrMsg);
+   
+	   if( rc != SQLITE_OK ){
+	   fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		  sqlite3_free(zErrMsg);
+	   } else {
+		  fprintf(stdout, "Datos subidos tabla TEMPERATURA correctamente\n");
+	   }
+	   
+	   
+	//5-Quan treballem amb data
+	    
+	p_data = localtime( &temps ); 
+	
+	strftime(fecha, 80,"%d/%m/%Y %H:%M:%S",p_data); 
+	
+ }
+   
+   
+   
+   
+   
+   

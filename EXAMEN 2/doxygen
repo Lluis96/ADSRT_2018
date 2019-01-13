@@ -1,0 +1,23 @@
+DOXYGEN
+--------------------------------
+
+1-Per comentar el que fa una funció i les variables que se li han de donar
+
+/**
+ * @brief Variables char amb l'email emisor i receptor per defecte
+ * @param nom_variable: punter a una estructura de tipus timer_t
+ */
+ 
+ int funcio (int nom_variable){
+ 
+ }
+ 
+2-Exemple per comentar una variable sola
+
+/**
+ * @brief Variable amb la temperatura mitjana
+ */
+	float temp_avgf;
+
+ 
+ 
